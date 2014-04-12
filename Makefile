@@ -12,7 +12,7 @@ run: disk.flp
 %.o: %.asm
 	nasm -f elf32 -o $@ $<
 
-os.bin: os.o main.o
+os.bin: os.o main.o pic.o
 	ld -o $@ $^ --oformat binary -mi386linux -Ttext -0x20
 
 disk.flp: boot.bin os.bin
