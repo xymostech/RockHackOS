@@ -12,8 +12,9 @@
         call setup_gdt
         call setup_idt
 
-        mov bx, 0
-        div bx
+        int 49
+
+        mov dword [0xb8000], '( : '
 
         jmp $
 
@@ -32,9 +33,13 @@ setup_idt:
         lidt [idt_pointer]
         ret
 
-test_interrupt:
+div_0_int:
         mov dword [0xb8000], ') : '
         hlt
+
+int_49_int:
+        mov dword [0xb8000], ') : '
+        iret
 
         times 0x200 - ($ - $$) dw 0
 gdt:
@@ -60,11 +65,17 @@ gdt_pointer:
         dd gdt
 
 idt:
-        dw test_interrupt
+        dw div_0_int
         dw 0x8
         dw 0x8E00
         dw 0
-        resd 49*2
+
+        times (48*2) dd 0
+
+        dw int_49_int
+        dw 0x8
+        dw 0x8E00
+        dw 0
 
 idt_pointer:
         dw (50*8)-1
