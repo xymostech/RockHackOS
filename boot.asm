@@ -39,7 +39,7 @@ go:
         mov ax, SYSSEG
         mov es, ax        ; segment of 0x010000
 
-        call read_sector
+        call read_sectors
 
 ; if the read went well we get current cursor position and save it for
 ; posterity.
@@ -89,24 +89,94 @@ end_move:
         lmsw   ax
         jmp    dword 0x8:0x0    ; jmp offset 0 of segment 8 (cs)
 
-        ;; Read in the next segment to ex
-read_sector:
+        ;; If this goes over 128, we need to make the stuff below better
+        ;; This should also be one more than os.bin's size, because it
+        ;; includes this file
+%define TOTALSECTORS 3
+%define SECTORSREAD 18
+
+        ;; The current sector we've read in
+sector:
+        dw 1
+cylinder:
+        dw 0
+
+read_sectors:
+        ;; Read in all the sectors that we need for the OS
         push ax
         push bx
         push cx
         push dx
+.read_loop:
+        ;; leave es
+        ;; bx = 512 * ([sector] - 1)
+        ;; al = [cylinder] == 0 ? SECTORSREAD - 1 : (TOTALSECTORS - [sector] > SECTORSREAD ? SECTORSREAD : TOTALSECTORS - [sector])
+        ;; cl = [cylinder] == 0 ? 2 : 1
+        ;; ch = [cylinder]
 
-        mov bx, 0
+        mov ax, [cylinder]
+        test ax, ax
+        jz .sector_zero_cylinder
+        mov ax, TOTALSECTORS
+        sub ax, [sector]
+        cmp ax, SECTORSREAD
+        jg .sector_normal_cylinder
+        jmp .sector_last_cylinder
+.sector_zero_cylinder:
+        mov ax, SECTORSREAD
+        dec ax
+        jmp .sector_done
+.sector_normal_cylinder:
+        mov ax, SECTORSREAD
+        jmp .sector_done
+.sector_last_cylinder:
+.sector_done:
 
-        mov al, 1
-        mov cx, 2
+        mov cx, [cylinder]
+        test cx, cx
+        jz .zero_cylinder2
+        jmp .other_cylinder
+.zero_cylinder2:
+        mov cl, 2
+        jmp .cylinder_done
+.other_cylinder:
+        mov ch, cl
+        mov cl, 1
+.cylinder_done:
+
+        mov bx, [sector]
+        sub bx, 1
+        shl bx, 9
+
+        call read_sector
+
+        mov bx, [cylinder]
+        inc bx
+        mov [cylinder], bx
+
+        mov bx, [sector]
+        mov ah, 0
+        add bx, ax
+        mov [sector], bx
+        cmp bx, TOTALSECTORS
+        jl .read_loop
+
+        pop dx
+        pop cx
+        pop bx
+        pop ax
+        ret
+
+        ;; Read in the next al sectors to es:bx
+read_sector:
+        push ax
+        push dx
+
         mov dx, 0
         mov ah, 02h
         int 13h
 
         pop dx
-        pop cx
-        pop bx
         pop ax
         ret
 
@@ -115,14 +185,14 @@ gdt:
 
         ;; Code
 
-        dw    0x07FF        ; 8Mb - limit=2047 (2048*4096=8Mb)
+        dw    0xFFFF        ; 128 Mb
         dw    0x0000        ; base address=0
         dw    0x9A00        ; code read/exec
         dw    0x00C0        ; granularity=4096, 386
 
         ;; Data
 
-        dw    0x07FF        ; 8Mb - limit=2047 (2048*4096=8Mb)
+        dw    0xFFFF        ; 128 Mb
         dw    0x0000        ; base address=0
         dw    0x9200        ; data read/write
         dw    0x00C0        ; granularity=4096, 386
