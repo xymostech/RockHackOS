@@ -1,6 +1,7 @@
         BITS 32
 
 EXTERN _main
+EXTERN _keyboard_int
 
         mov eax, 0x10
         mov ds, ax
@@ -36,7 +37,16 @@ div_0_int:
         hlt
 
 keyboard_int:
-        mov dword [0xb8000], ') : '
+        push eax
+        in al, 0x60
+
+        push eax
+        call _keyboard_int
+        pop eax
+
+        mov al, 0x20
+        out 0x20, al
+        pop eax
         iret
 
 int_48_int:
