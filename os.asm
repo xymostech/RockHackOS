@@ -10,7 +10,7 @@ EXTERN _irq6_handler
         mov fs, ax
         mov gs, ax
         mov ss, ax
-        mov eax, 0x1000
+        mov eax, 0x8000
         mov esp, eax
 
         call setup_gdt
