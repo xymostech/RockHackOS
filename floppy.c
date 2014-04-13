@@ -98,6 +98,8 @@ void floppy_init() {
     recalibrate();
 
     *(char*)(0xb800c) = 0x4C;
+
+    dma_setup_floppy();
 }
 
 void floppy_reset() {
@@ -116,27 +118,25 @@ void floppy_reset() {
     outb(DSR, 0x00);
 }
 
-void floppy_seek() {
-    irq6_done = 0;
-
-    outb(FIFO, SEEK);
-    outb(FIFO, 0 << 2 | 0); // head << 2 | drive
-    outb(FIFO, 0); // cylinder
-
-    while (!irq6_done);
-
-    sense_interrupt();
+void memcpy(uint8_t *from, uint8_t *to, int bytes) {
+    int i;
+    for (i = 0; i < bytes; i++) {
+        to[i] = from[i];
+    }
 }
 
-void floppy_read(uint8_t *buffer) {
+#define FLOPPY_BUFFER ((uint8_t*)0x4000)
+
+void floppy_read(uint8_t *buffer, uint8_t head, uint8_t cylinder, uint8_t sector) {
     irq6_done = 0;
+    dma_prepare_floppy_read();
 
     outb(FIFO, MTBIT | MFMBIT | READ_DATA);
 
-    outb(FIFO, 0 << 2 | 0); // head << 2 | drive
-    outb(FIFO, 0); // cylinder
-    outb(FIFO, 0); // head
-    outb(FIFO, 1); // sector start
+    outb(FIFO, head << 2 | 0); // head << 2 | drive
+    outb(FIFO, cylinder); // cylinder
+    outb(FIFO, head); // head
+    outb(FIFO, sector); // sector start
     outb(FIFO, 2); // LEAVE (512 byte sectors)
     outb(FIFO, 1); // sectors
     outb(FIFO, 0x1b); // LEAVE (GAP1??)
@@ -147,7 +147,37 @@ void floppy_read(uint8_t *buffer) {
     uint8_t st0 = inb(FIFO);
     uint8_t st1 = inb(FIFO);
     uint8_t st2 = inb(FIFO);
-    uint8_t cylinder = inb(FIFO);
+    uint8_t cylinder_again = inb(FIFO);
+    uint8_t ending_head = inb(FIFO);
+    uint8_t ending_sector = inb(FIFO);
+    uint8_t should_be_2 = inb(FIFO);
+
+    memcpy(FLOPPY_BUFFER, buffer, 512);
+}
+
+void floppy_write(uint8_t *buffer, uint8_t head, uint8_t cylinder, uint8_t sector) {
+    irq6_done = 0;
+    dma_prepare_floppy_write();
+
+    memcpy(buffer, FLOPPY_BUFFER, 512);
+
+    outb(FIFO, MTBIT | MFMBIT | WRITE_DATA);
+
+    outb(FIFO, head << 2 | 0); // head << 2 | drive
+    outb(FIFO, cylinder); // cylinder
+    outb(FIFO, head); // head
+    outb(FIFO, sector); // sector start
+    outb(FIFO, 2); // LEAVE (512 byte sectors)
+    outb(FIFO, 1); // sectors
+    outb(FIFO, 0x1b); // LEAVE (GAP1??)
+    outb(FIFO, 0xff); // LEAVE (also 512 byte sectors?)
+
+    while (!irq6_done);
+
+    uint8_t st0 = inb(FIFO);
+    uint8_t st1 = inb(FIFO);
+    uint8_t st2 = inb(FIFO);
+    uint8_t cylinder_again = inb(FIFO);
     uint8_t ending_head = inb(FIFO);
     uint8_t ending_sector = inb(FIFO);
     uint8_t should_be_2 = inb(FIFO);

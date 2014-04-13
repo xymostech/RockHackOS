@@ -41,15 +41,16 @@ __attribute__((naked)) void _main() {
     pic_mask(0xbd, 0xff);
     pic_enable();
 
-    dma_setup_floppy();
-
     floppy_init();
-    floppy_seek();
 
-    uint8_t *buffer = 0x4000;
+    uint8_t buffer[512];
 
-    dma_prepare_floppy_read();
-    floppy_read(buffer);
+    floppy_read(buffer, 0, 0, 1);
+
+    buffer[0] = 0xab;
+
+    floppy_write(buffer, 0, 0, 1);
+    floppy_read(buffer, 0, 0, 1);
 
     print_number(buffer[0], 0x10);
     print_number(buffer[1], 0x18);

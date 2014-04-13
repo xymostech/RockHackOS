@@ -67,8 +67,6 @@ floppy_int:
 int_48_int:
         mov dword [0xb8000], ') : '
         iret
-
-        times 0x200 - ($ - $$) dw 0
 gdt:
         ;; null descriptor
         dw 0,0,0,0
@@ -168,5 +166,3 @@ idt:
 idt_pointer:
         dw (49*8)-1
         dd idt
-
-        times 0x1000 - ($ - $$) dw 0

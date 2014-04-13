@@ -1,7 +1,11 @@
 .PHONY: run clean debug
 
 run: disk.flp
-	qemu-system-i386 -fda $<
+	cp $< $<.real
+	qemu-system-i386 -fda $<.real
+
+continue: disk.flp
+	qemu-system-i386 -fda $<.real
 
 %.bin: %.asm
 	nasm -f bin -o $@ $<
