@@ -4,7 +4,7 @@
 #include "types.h"
 #include "hexes.h"
 
-uint8_t get_last_key();
+uint8_t keyboard_get_last_key();
 void _keyboard_int(int keycode);
 
 #endif

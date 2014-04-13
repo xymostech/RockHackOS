@@ -2,6 +2,8 @@
 #include "floppy.h"
 #include "dma.h"
 #include "hexes.h"
+#include "fs.h"
+#include "shell.h"
 
 void print_number(uint16_t x, int row, int col) {
     char buf[5];
@@ -42,18 +44,10 @@ __attribute__((naked)) void _main() {
     floppy_init();
 
     uint8_t buffer[512];
-
     floppy_read(buffer, 0, 0, 1);
 
-    print_number(buffer[0], 0, 10);
-    print_number(buffer[1], 0, 14);
-    print_number(buffer[2], 0, 18);
-    print_number(buffer[3], 0, 22);
-    print_number(buffer[4], 0, 26);
+    clear_screen();
+    hexes_setup_print();
 
-    hexes_move_cursor(0, 0);
-    hexes_write_char('(', 0, 0);
-    hexes_write_char(':', 0, 1);
-
-    while (1) {}
+    shell_run();
 }

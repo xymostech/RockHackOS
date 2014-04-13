@@ -23,3 +23,42 @@ void hexes_write_string(char *str, int row, int col) {
         str++;
     }
 }
+
+int curr_col = 0, curr_row = 0;
+
+void hexes_setup_print() {
+    hexes_move_cursor(0, 0);
+    curr_col = 0;
+    curr_row = 0;
+}
+
+void hexes_print_char(uint8_t character) {
+    if (character == 0x0A) {
+        curr_row++;
+        curr_col = 0;
+    } else {
+        hexes_write_char(character, curr_row, curr_col);
+        curr_col++;
+        if (curr_col == 80) {
+            curr_col = 0;
+            curr_row++;
+            if (curr_row == 25) {
+                curr_row = 0;
+            }
+        }
+    }
+    hexes_move_cursor(curr_row, curr_col);
+}
+
+void hexes_print_backspace() {
+    curr_col--;
+    if (curr_col < 0) {
+        curr_col = 79;
+        curr_row--;
+        if (curr_row < 0) {
+            curr_row = 24;
+        }
+    }
+    hexes_write_char(' ', curr_row, curr_col);
+    hexes_move_cursor(curr_row, curr_col);
+}

@@ -1,4 +1,5 @@
 #include "floppy.h"
+#include "mem.h"
 
 enum Registers {
     STATUS_REGISTER_A                = 0x3F0, // read-only
@@ -45,7 +46,6 @@ volatile int irq6_done = 0;
 
 void _irq6_handler() {
     irq6_done = 1;
-    hexes_write_char('F', 0, 5);
 }
 
 void wait_for_rqm() {
@@ -97,8 +97,6 @@ void floppy_init() {
     motoron();
     recalibrate();
 
-    hexes_write_char('I', 0, 6);
-
     dma_setup_floppy();
 }
 
@@ -118,13 +116,6 @@ void floppy_reset() {
     outb(DSR, 0x00);
 }
 
-void memcpy(uint8_t *from, uint8_t *to, int bytes) {
-    int i;
-    for (i = 0; i < bytes; i++) {
-        to[i] = from[i];
-    }
-}
-
 #define FLOPPY_BUFFER ((uint8_t*)0x4000)
 
 void floppy_read(uint8_t *buffer, uint8_t head, uint8_t cylinder, uint8_t sector) {
@@ -133,7 +124,7 @@ void floppy_read(uint8_t *buffer, uint8_t head, uint8_t cylinder, uint8_t sector
 
     outb(FIFO, MTBIT | MFMBIT | READ_DATA);
 
-    outb(FIFO, head << 2 | 0); // head << 2 | drive
+    outb(FIFO, (head << 2) | 0); // head << 2 | drive
     outb(FIFO, cylinder); // cylinder
     outb(FIFO, head); // head
     outb(FIFO, sector); // sector start
@@ -163,7 +154,7 @@ void floppy_write(uint8_t *buffer, uint8_t head, uint8_t cylinder, uint8_t secto
 
     outb(FIFO, MTBIT | MFMBIT | WRITE_DATA);
 
-    outb(FIFO, head << 2 | 0); // head << 2 | drive
+    outb(FIFO, (head << 2) | 0); // head << 2 | drive
     outb(FIFO, cylinder); // cylinder
     outb(FIFO, head); // head
     outb(FIFO, sector); // sector start
