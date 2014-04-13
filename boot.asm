@@ -92,7 +92,7 @@ end_move:
         ;; If this goes over 128, we need to make the stuff below better
         ;; This should also be one more than os.bin's size, because it
         ;; includes this file
-%define TOTALSECTORS 3
+%define TOTALSECTORS 36
 %define SECTORSREAD 18
 
         ;; The current sector we've read in
@@ -114,52 +114,53 @@ read_sectors:
         ;; cl = [cylinder] == 0 ? 2 : 1
         ;; ch = [cylinder]
 
-        mov ax, [cylinder]
-        test ax, ax
-        jz .sector_zero_cylinder
-        mov ax, TOTALSECTORS
-        sub ax, [sector]
-        cmp ax, SECTORSREAD
-        jg .sector_normal_cylinder
-        jmp .sector_last_cylinder
-.sector_zero_cylinder:
-        mov ax, SECTORSREAD
-        dec ax
-        jmp .sector_done
-.sector_normal_cylinder:
-        mov ax, SECTORSREAD
-        jmp .sector_done
-.sector_last_cylinder:
-.sector_done:
+;        mov ax, [cylinder]
+;        test ax, ax
+;        jz .sector_zero_cylinder
+;        mov ax, TOTALSECTORS
+;        sub ax, [sector]
+;        cmp ax, SECTORSREAD
+;        jg .sector_normal_cylinder
+;        jmp .sector_last_cylinder
+;.sector_zero_cylinder:
+;        mov ax, SECTORSREAD
+;        dec ax
+;        jmp .sector_done
+;.sector_normal_cylinder:
+;        mov ax, SECTORSREAD
+;        jmp .sector_done
+;.sector_last_cylinder:
+;.sector_done:
+;
+;        mov cx, [cylinder]
+;        test cx, cx
+;        jz .zero_cylinder2
+;        jmp .other_cylinder
+;.zero_cylinder2:
+;        mov cl, 2
+;        jmp .cylinder_done
+;.other_cylinder:
+;        mov ch, cl
+;        mov cl, 1
+;.cylinder_done:
+;
+;        mov bx, [sector]
+;        sub bx, 1
+;        shl bx, 9
 
-        mov cx, [cylinder]
-        test cx, cx
-        jz .zero_cylinder2
-        jmp .other_cylinder
-.zero_cylinder2:
+        mov bx, 0
+        mov al, SECTORSREAD-1
         mov cl, 2
-        jmp .cylinder_done
-.other_cylinder:
-        mov ch, cl
-        mov cl, 1
-.cylinder_done:
-
-        mov bx, [sector]
-        sub bx, 1
-        shl bx, 9
+        mov ch, 0
 
         call read_sector
 
-        mov bx, [cylinder]
-        inc bx
-        mov [cylinder], bx
+        ;mov bx, 0
+        ;mov al, SECTORSREAD-1
+        ;mov cl, 2
+        ;mov ch, 0
 
-        mov bx, [sector]
-        mov ah, 0
-        add bx, ax
-        mov [sector], bx
-        cmp bx, TOTALSECTORS
-        jl .read_loop
+        ;call read_sector
 
         pop dx
         pop cx

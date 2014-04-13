@@ -2,6 +2,7 @@
 
 EXTERN _main
 EXTERN _keyboard_int
+EXTERN _irq6_handler
 
         mov eax, 0x10
         mov ds, ax
@@ -36,6 +37,10 @@ div_0_int:
         mov dword [0xb8000], ') : '
         hlt
 
+gpf_int:
+        mov dword [0xb8006], 'g p '
+        hlt
+
 keyboard_int:
         push eax
         in al, 0x60
@@ -46,6 +51,16 @@ keyboard_int:
 
         mov al, 0x20
         out 0x20, al
+        pop eax
+        iret
+
+floppy_int:
+        push eax
+        call _irq6_handler
+
+        mov al, 0x20
+        out 0x20, al
+
         pop eax
         iret
 
@@ -94,7 +109,12 @@ idt:
         dd 0, 0                 ; invalid tss
         dd 0, 0                 ; segment not present
         dd 0, 0                 ; stack segfault
-        dd 0, 0                 ; gpf
+
+        dw gpf_int                 ; gpf
+        dw 0x8
+        dw 0x8E00
+        dw 0
+
         dd 0, 0                 ; page fault
         dd 0, 0                 ; reserved
         dd 0, 0                 ; x87 floating point exception
@@ -113,17 +133,23 @@ idt:
         dd 0, 0
         dd 0, 0
         dd 0, 0
-        dd 0, 0                 ; IRQ 1
+        dd 0, 0                 ; IRQ 0
 
-        dw keyboard_int         ; IRQ 2 (keyboard)
+        dw keyboard_int         ; IRQ 1 (keyboard)
         dw 0x8
         dw 0x8E00
         dw 0
 
+        dd 0, 0                 ; IRQ 2
         dd 0, 0                 ; IRQ 3
         dd 0, 0                 ; IRQ 4
         dd 0, 0                 ; IRQ 5
-        dd 0, 0                 ; IRQ 6 (floppy)
+
+        dw floppy_int           ; IRQ 6 (floppy)
+        dw 0x8
+        dw 0x8E00
+        dw 0
+
         dd 0, 0                 ; IRQ 7
         dd 0, 0                 ; IRQ 8
         dd 0, 0                 ; IRQ 9

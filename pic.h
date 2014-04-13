@@ -2,6 +2,7 @@
 #define PIC_H
 
 #include "types.h"
+#include "io.h"
 
 void pic_remap(uint8_t offset1, uint8_t offset2);
 void pic_mask(uint8_t mask1, uint8_t mask2);

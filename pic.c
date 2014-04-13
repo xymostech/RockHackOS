@@ -19,16 +19,6 @@
 #define ICW4_BUF_MASTER 0x0C /* Buffered mode/master */
 #define ICW4_SFNM       0x10 /* Special fully nested (not) */
 
-static inline void outb(uint16_t port, uint8_t val) {
-    asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
-}
-
-static inline uint8_t inb(uint16_t port) {
-    uint8_t ret;
-    asm volatile ( "inb %1, %0" : "=a"(ret) : "Nd"(port) );
-    return ret;
-}
-
 void pic_remap(uint8_t offset1, uint8_t offset2) {
     uint8_t a1, a2;
     a1 = inb(PIC1_DATA);
@@ -56,9 +46,9 @@ void pic_mask(uint8_t mask1, uint8_t mask2) {
 }
 
 void pic_enable() {
-    asm ("sti");
+    __asm__ ("sti");
 }
 
 void pic_disable() {
-    asm ("cli");
+    __asm__ ("cli");
 }
