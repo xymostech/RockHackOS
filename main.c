@@ -1,13 +1,10 @@
 #include "pic.h"
 #include "floppy.h"
 #include "dma.h"
+#include "hexes.h"
 
-void _keyboard_int(int keycode) {
-    *(char*)(0xb8004) = keycode;
-}
-
-void print_number(uint16_t x, int offset) {
-    char buf[4];
+void print_number(uint16_t x, int row, int col) {
+    char buf[5];
     char ch;
     int c;
 
@@ -22,15 +19,16 @@ void print_number(uint16_t x, int offset) {
         x >>= 4;
     }
 
-    for (c = 0; c < 4; c++) {
-        *(char*)(0xb8000 + c*2 + offset) = buf[c];
-    }
+    buf[4] = 0;
+    hexes_write_string(buf, row, col);
 }
 
 void clear_screen() {
-    int i;
-    for (i = 0; i < 2000; i++) {
-        *(char*)(0xb8000 + i * 2) = 0x20;
+    int i, j;
+    for (i = 0; i < 25; i++) {
+        for (j = 0; j < 80; j++) {
+            hexes_write_char(' ', i, j);
+        }
     }
 }
 
@@ -47,17 +45,15 @@ __attribute__((naked)) void _main() {
 
     floppy_read(buffer, 0, 0, 1);
 
-    buffer[0] = 0xab;
+    print_number(buffer[0], 0, 10);
+    print_number(buffer[1], 0, 14);
+    print_number(buffer[2], 0, 18);
+    print_number(buffer[3], 0, 22);
+    print_number(buffer[4], 0, 26);
 
-    floppy_write(buffer, 0, 0, 1);
-    floppy_read(buffer, 0, 0, 1);
+    hexes_move_cursor(0, 0);
+    hexes_write_char('(', 0, 0);
+    hexes_write_char(':', 0, 1);
 
-    print_number(buffer[0], 0x10);
-    print_number(buffer[1], 0x18);
-    print_number(buffer[2], 0x20);
-    print_number(buffer[3], 0x28);
-    print_number(buffer[4], 0x30);
-
-    *(int*)(0xb8000) = 0x203a2028;
     while (1) {}
 }

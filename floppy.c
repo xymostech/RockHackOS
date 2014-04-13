@@ -45,7 +45,7 @@ volatile int irq6_done = 0;
 
 void _irq6_handler() {
     irq6_done = 1;
-    *(char*)(0xb800a) = 0x4C;
+    hexes_write_char('F', 0, 5);
 }
 
 void wait_for_rqm() {
@@ -97,7 +97,7 @@ void floppy_init() {
     motoron();
     recalibrate();
 
-    *(char*)(0xb800c) = 0x4C;
+    hexes_write_char('I', 0, 6);
 
     dma_setup_floppy();
 }

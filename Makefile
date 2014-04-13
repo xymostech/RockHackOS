@@ -16,7 +16,7 @@ continue: disk.flp
 %.o: %.asm
 	nasm -f elf32 -o $@ $<
 
-os.bin: os.o main.o pic.o io.o floppy.o dma.o
+os.bin: os.o main.o pic.o io.o floppy.o dma.o keyboard.o hexes.o
 	ld -o $@ $^ --oformat binary -mi386linux -Ttext -0x20
 
 disk.flp: boot.bin os.bin

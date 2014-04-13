@@ -3,6 +3,7 @@
 
 #include "pic.h"
 #include "dma.h"
+#include "hexes.h"
 
 void _irq6_handler();
 void floppy_init();
