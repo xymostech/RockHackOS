@@ -146,7 +146,7 @@ int add_entry(char *path, char *name, uint8_t flags) {
     }
     for (i = 0; i < 31; i++) {
         if (!(node.entries[i].flags & FLAG_EXISTS)) {
-            memset(node.entries[i].name, 12, 0);
+            memset((uint8_t*)node.entries[i].name, 12, 0);
             strcpy(node.entries[i].name, name);
             node.entries[i].flags = flags | FLAG_EXISTS;
             node.entries[i].sector = next_sector;

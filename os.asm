@@ -67,6 +67,7 @@ floppy_int:
 int_48_int:
         mov dword [0xb8000], ') : '
         iret
+
 gdt:
         ;; null descriptor
         dw 0,0,0,0
